@@ -84,51 +84,38 @@ void loop() {
     // Input
     input = double(cm);
 
-    // Reports Input
-    reportResult("Distance", input);
-
     // Computes PID For Output
     output = computePID(input);
 
     // Formats Output to a Range of 0 to 180 Degrees
     servoOutput = min(max(0, int(output)), 180);
 
+    Serial.println("I " + String(input) + " O " + String(servoOutput));
+
     // Sets Servo Degrees
     myServo.write(servoOutput);
-    
-    // Reports Output
-    reportResult("Output", servoOutput);
   }
 }
 
 void serialEvent() {
   char key = char(Serial.read());
-    switch (key) {
-      case 'f': // Turns off functionality
-        on = false;
-        Serial.println("Turned Off");
-        break;
-      case 'o': // Turns on functionality
-        on = true;
-        Serial.println("Turned On");
-        break;
-      case 'u': // Updates PID values
-        kP = Serial.parseFloat();
-        kI = Serial.parseFloat();
-        kD = Serial.parseFloat();
-        setPoint = Serial.parseFloat();
-        reportResult("Updated Successfully!");
-        break;
-    }
+  switch (key) {
+    case 'f': // Turns off functionality
+      on = false;
+      Serial.println('f');
+      break;
+    case 'o': // Turns on functionality
+      on = true;
+      Serial.println('o');
+      break;
+    case 'u': // Updates PID values
+      kP = Serial.parseFloat();
+      kI = Serial.parseFloat();
+      kD = Serial.parseFloat();
+      setPoint = Serial.parseFloat();
+      Serial.println('u');
+      break;
   }
-}
-
-// Prints Results Back to Python
-void reportResult(String msg, double val) {
-  formatOutput = msg;
-  formatOutput.concat(": ");
-  formatOutput.concat(val);
-  Serial.println(formatOutput);
 }
 
 // Computes PID

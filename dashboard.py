@@ -1,15 +1,25 @@
 from dash import Dash, dcc, html, Input, Output, State
 import dash_daq as daq
 import dash_bootstrap_components as dbc
-import plotly.express as px
+
 import plotly.graph_objects as go
 import numpy as np
-from collections import deque
+import serial
 
 kp = 1
 ki = 0
 kd = 0
 setpoint = 0
+
+def connect_arduino():
+    try:
+        return serial.Serial(port='COM3', baudrate=9600, timeout=.1)
+    except:
+        input("Arduino not connected. Press enter to retry...")
+        return connect_arduino()
+
+arduino = connect_arduino()
+    
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
 
@@ -129,7 +139,8 @@ def live_graph(n_interval):
     State('kd', 'value'),
     State('setpoint', 'value'))
 def pid_submit(n_clicks, kp, ki, kd, setpoint):
-    print(kp, ki, kd, setpoint)
+    arduino.write(f'u{kp} {ki} {kd} {setpoint}'.encode())
+    print("New PID:", kp, ki, kd, setpoint)
     return f"Proportional: {kp} Integral: {ki} Derivative: {kd} Setpoint: {setpoint}"
 
 @app.callback(
@@ -137,8 +148,10 @@ def pid_submit(n_clicks, kp, ki, kd, setpoint):
     Input('power-button', 'on'))
 def power_button(on):
     if on:
+        arduino.write('o'.encode())
         return 'ON'
     else:
+        arduino.write('f'.encode())
         return 'OFF'
 
 
