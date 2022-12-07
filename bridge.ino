@@ -34,9 +34,8 @@ int outputSize = 200;
 // Serial Port for Comms
 int serialPort = 9600;
 
-// Ports for Ultrasonic
-int ultraIn = 8; // ECHO
-int ultraOut = 9; // TRIG
+// Port for IR Sensor
+int sensorPort = A0;
 
 // Delays
 int lowDelay = 2;
@@ -47,7 +46,7 @@ long dur = 0;
 long cm = 0;
 
 // Ports for Servo
-int servoPort = 6;
+int servoPort = 9;
 Servo myServo;
 
 void setup() {
@@ -60,29 +59,15 @@ void setup() {
   // Attaches Servo
   myServo.attach(servoPort);
 
-  // Connects to Ultrasonic
-  pinMode(ultraIn, INPUT);
-  pinMode(ultraOut, OUTPUT);
+  // Connects to IR Sensor
+  pinMode(sensorPort, INPUT);
 }
 
 void loop() {
   // Only Gets Data and Writes Results if Ready
   if(on) {
-    // Sends Signals
-    digitalWrite(ultraOut, LOW);
-    delayMicroseconds(lowDelay);
-    digitalWrite(ultraOut, HIGH);
-    delayMicroseconds(highDelay);
-    digitalWrite(ultraOut, LOW);
-
-    // Calculates Distance
-    dur = pulseIn(ultraIn, HIGH);
-    // Speed of Sound is 29 microseconds per cm
-    // Sound Waves Going and Reflecting Back Takes Twice The Distance
-    cm = dur / 29 / 2;
-
-    // Input
-    input = double(cm);
+    // Calculates cm from sensors (obtained from sensorCalib.xslx)
+    input = 1851.6 * pow(analogRead(A0), -0.634) - 32;
 
     // Computes PID For Output
     output = computePID(input);
@@ -90,7 +75,7 @@ void loop() {
     // Formats Output to a Range of 0 to 180 Degrees
     servoOutput = min(max(0, int(output)), 180);
 
-    Serial.println("I " + String(input) + " O " + String(servoOutput));
+    Serial.println("I " + String(input) + " O " + String(servoOutput) + " T " +  String(elapsedTime));
 
     // Sets Servo Degrees
     myServo.write(servoOutput);

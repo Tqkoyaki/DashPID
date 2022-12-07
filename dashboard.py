@@ -11,6 +11,10 @@ ki = 0
 kd = 0
 setpoint = 0
 
+inp = 0
+out = 0
+time = 0
+
 def connect_arduino():
     try:
         return serial.Serial(port='COM3', baudrate=9600, timeout=.1)
@@ -102,14 +106,15 @@ app.layout = html.Div([
     Output('live-graph', 'figure'),
     Input('interval', 'n_intervals'))
 def live_graph(n_interval):
+    
+    inp, out, time = read_arduino()
     t.pop(0)
-    t.append(t[-1] + t_interval)
+    t.append(time)
     
     fig = go.Figure()
     
     scatter = go.Scatter(x=t, y=np.sin(t), mode='markers', name='sin')
-    scatter2 = go.Scatter(x=t, y=np.cos(t), mode='markers', name='cos')
-    scatter3 = go.Scatter(x=t, y=[0.1] * len(t), mode='lines', name='setpoint')
+    scatter3 = go.Scatter(x=t, y=np.array([1, len(t)].fill(setpoint)), mode='lines', name='setpoint')
     
     fig.add_traces([scatter, scatter2, scatter3])
     
@@ -154,6 +159,21 @@ def power_button(on):
         arduino.write('f'.encode())
         return 'OFF'
 
+def read_arduino():
+    data = ''
+    while True:
+        data += arduino.read().decode('ascii')
+        if data[-1] == 'D':
+            break
+    
+    arduino.flushInput()
+    
+    data = data.split(' ')
+    if len(data) < 7:
+        raise Exception("Invalid data")
+    
+    arduino.flush()
+    return float(data[1]), float(data[3]), float(data[5])
 
 if __name__ == '__main__':
     app.run_server(debug=True)
